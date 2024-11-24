@@ -51,11 +51,14 @@ item_images = [
 ]
 
 # Resize images
-scale_factor = 5
-standing_img = pygame.transform.scale(
-    standing_img,
-    (int(standing_img.get_width() * scale_factor), int(standing_img.get_height() * scale_factor))
-)
+scale_factor = 7
+standing_img = pygame.transform.scale(standing_img,(int(standing_img.get_width() * scale_factor), int(standing_img.get_height() * scale_factor)))
+item_images[0],item_images[1], item_images[2] = pygame.transform.scale(item_images[0],(int(item_images[0].get_width() * 1.1), int(item_images[0].get_height() * 1.1))), pygame.transform.scale(item_images[1],(int(item_images[1].get_width() * 1.1), int(item_images[1].get_height() * 1.1))), pygame.transform.scale(item_images[2],(int(item_images[2].get_width() * 1.1), int(item_images[2].get_height() * 1.1)))
+item_images[3] = pygame.transform.scale(item_images[3],(int(item_images[3].get_width() * 0.5), int(item_images[3].get_height() * 0.5)))
+item_images[4], item_images[5] = pygame.transform.scale(item_images[4],(int(item_images[4].get_width() * 0.4), int(item_images[4].get_height() * 0.4))), pygame.transform.scale(item_images[5],(int(item_images[5].get_width() * 0.5), int(item_images[5].get_height() * 0.5)))
+item_images[6], item_images[7] = pygame.transform.scale(item_images[6],(int(item_images[6].get_width() * 0.5), int(item_images[6].get_height() * 0.5))), pygame.transform.scale(item_images[7],(int(item_images[7].get_width() * 0.5), int(item_images[7].get_height() * 0.5)))
+
+
 walking_left_imgs, walking_right_imgs = resize_images(walking_left_imgs, scale_factor), resize_images(walking_right_imgs, scale_factor)
 item_images = resize_images(item_images, scale_factor)
 bg = pygame.transform.scale(bg, (3000, HEIGHT))  # Scale to world width
@@ -65,7 +68,7 @@ WORLD_WIDTH = 3000
 
 # Character attributes
 x, y = WIDTH // 2, FLOOR_HEIGHT
-velocity = 10
+velocity = 15
 jumping = False
 y_velocity = 0
 
@@ -95,12 +98,13 @@ while running:
 
     # Get key states
     keys = pygame.key.get_pressed()
+    print(collected_item)
 
     # Horizontal movement logic
-    if keys[pygame.K_a]:  # Move left
+    if keys[pygame.K_a] or keys[pygame.K_LEFT]:  # Move left
         x -= velocity
         left, right = True, False
-    elif keys[pygame.K_d]:  # Move right
+    elif keys[pygame.K_d] or keys[pygame.K_RIGHT]:  # Move right
         x += velocity
         left, right = False, True
     else:
@@ -127,11 +131,13 @@ while running:
 
     # Pickup items
     player_rect = pygame.Rect(x, y, standing_img.get_width(), standing_img.get_height())
+
     if keys[pygame.K_SPACE] and not collected_item:
         collected_item = check_item_pickup(player_rect, items, pickup_range=20)
         if collected_item:
             items.remove(collected_item)
-
+    if keys[pygame.K_SPACE] and collected_item:
+        print("asdf")
     # Draw background
     screen.blit(bg, (-camera_x, 0))
 
@@ -157,7 +163,7 @@ while running:
     if collected_item:
         item_image = collected_item["image"]
         item_x = x - camera_x + (standing_img.get_width() - item_image.get_width()) // 2  # Center above player
-        item_y = y - item_image.get_height() - 20  # Position slightly above player
+        item_y = y - item_image.get_height() + 150 
         screen.blit(item_image, (item_x, item_y))
 
     # Update the display
