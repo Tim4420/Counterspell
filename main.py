@@ -16,12 +16,16 @@ def generate_random_items(item_images, num_items, floor_height, world_width):
     return items
 
 def check_item_pickup(player_rect, items, pickup_range):
-    """Check if player is within range to pick up items."""
     for item in items[:]:  # Copy the list to safely modify it
         item_rect = pygame.Rect(item["x"], item["y"], item["image"].get_width(), item["image"].get_height())
         if player_rect.colliderect(item_rect.inflate(pickup_range, pickup_range)):
             return item
     return None
+
+def drop_item(collected_item, floor_height):
+    # Drop the item back to the floor
+    collected_item["y"] = floor_height - collected_item["image"].get_height()
+    return collected_item
 
 # Initialize Pygame
 pygame.init()
@@ -139,17 +143,20 @@ while running:
 
     # Pickup items
     player_rect = pygame.Rect(x, y, standing_img.get_width(), standing_img.get_height())
-
-    if keys[pygame.K_SPACE] and not collected_item:
-        collected_item = check_item_pickup(player_rect, items, pickup_range=20)
-        if collected_item:
-            items.remove(collected_item)
+    if keys[pygame.K_SPACE]:
+        if collected_item == None:
+            collected_item = check_item_pickup(player_rect, items, pickup_range=20)
+            if collected_item:
+                items.remove(collected_item)
+        else:
+            # Drop the held item back to its original position on the floor        
+                collected_item = drop_item(collected_item, FLOOR_HEIGHT)
 
     # Draw background
     screen.blit(bg, (-camera_x, 0))
-
-    screen.blit(window, (-140 - camera_x, -50))
-    screen.blit(window, (-140 - camera_x, 220))
+    screen.blit(window, (-140-camera_x, -40))
+    screen.blit(window, (-140 - camera_x, 200))
+    screen.blit(window, (-140 - camera_x, 450))
 
     # Draw items
     for item in items:
@@ -190,6 +197,10 @@ while running:
         item_x = x - camera_x + (standing_img.get_width() - item_image.get_width()) // 2  # Center above player
         item_y = y - item_image.get_height() + 150 
         screen.blit(item_image, (item_x, item_y))
+    else:
+        for item in items:
+            screen.blit(item["image"], (item["x"] - camera_x, item["y"]))
+    print(collected_item)
 
 
     if seconds <= 0:
