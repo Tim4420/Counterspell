@@ -1,12 +1,4 @@
-'''import pygame
 
-pygame.init()
-screen = pygame.display.set_mode((1200, 700))
-
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.quit():
-            raise SystemExit'''
 import pygame
 import sys
 import os
@@ -20,8 +12,10 @@ RED = (255, 25, 25)
 BLACK = (23, 23, 23)
 GREEN = (25, 255, 25)
 ALPHA = (0, 255, 0)
-
 FPS = 30
+font = pygame.font.Font("Minecraft.ttf", 20)
+playerdeath = False
+
 
 class employee(pygame.sprite.Sprite):
 
@@ -39,7 +33,7 @@ class employee(pygame.sprite.Sprite):
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("PLACEHOLDER")
 clock = pygame.time.Clock()
-font = pygame.font.Font(None, 36)
+
 
 player_size = 50
 player_x, player_y = WIDTH // 2, HEIGHT // 2
@@ -57,31 +51,37 @@ while running:
             running = False
 
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT] and player_x > 0:
+    if keys[pygame.K_LEFT] or keys[pygame.K_a] and player_x > 0:
         player_x -= player_speed
-    if keys[pygame.K_RIGHT] and player_x < WIDTH - player_size:
+    if keys[pygame.K_RIGHT] or keys[pygame.K_d] and player_x < WIDTH - player_size:
         player_x += player_speed
-    if keys[pygame.K_UP] and player_y > 0:
-        player_y -= player_speed
-    if keys[pygame.K_DOWN] and player_y < HEIGHT - player_size:
+    if keys[pygame.K_UP] or keys[pygame.K_w] and player_y > 0:
+        player_y -= player_speed 
+    if keys[pygame.K_DOWN]or keys[pygame.K_s]  and player_y < HEIGHT - player_size:
         player_y += player_speed
 
     timer -= 1
     if timer <= 0:
         running = False
+        if not playerdeath:
+            screen.fill(BLACK)
+            end_text = font.render("You Did Not Die and Never Woke Up. Game Over", True, RED)
 
-    timer_text = font.render(f"Time Left: {timer // 30}s", True, BLACK)
+
+
+
+    timer_text = font.render(f"Time Left: {timer // 30}s", True, RED)
     screen.blit(timer_text, (10, 10))
 
     pygame.display.flip()
     clock.tick(30)
 
-if game_over:
+if playerdeath:
     screen.fill(WHITE)
-    end_text = font.render("You Did It! Game Over.", True, RED)
+    end_text = font.render("You Died And Woke U p! Game Over.", True, WHITE)
     screen.blit(end_text, (WIDTH // 2 - 150, HEIGHT // 2 - 50))
     pygame.display.flip()
     pygame.time.wait(3000)
+    pygame.quit()
 
-pygame.quit()
 sys.exit()
