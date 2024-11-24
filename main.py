@@ -1,14 +1,14 @@
 import pygame
 import random
+import sys
 
 # Functions
 def resize_images(images, scale_factor):
     return [pygame.transform.scale(img, (int(img.get_width() * scale_factor), int(img.get_height() * scale_factor))) for img in images]
 
 def generate_random_items(item_images, num_items, floor_height, world_width):
-    """Generate random items on the floor."""
     items = []
-    for i in range(num_items):
+    for i in range(2):
         img = random.choice(item_images)
         x = random.randint(0, world_width - img.get_width())
         y = floor_height - img.get_height()
@@ -31,7 +31,7 @@ WIDTH, HEIGHT = 1200, 700
 FLOOR_HEIGHT = HEIGHT - 300
 FPS = 30
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Camera and Items")
+pygame.display.set_caption("60 Seconds Of Self")
 clock = pygame.time.Clock()
 
 # Load images
@@ -49,6 +49,7 @@ item_images = [
     pygame.image.load("item/Tall Plant.png"),
     pygame.image.load("item/Short Plant.png")
 ]
+window,broken = pygame.image.load("Window.png"), pygame.image.load("Window_Cracked.png")
 
 # Resize images
 scale_factor = 7
@@ -62,6 +63,9 @@ item_images[6], item_images[7] = pygame.transform.scale(item_images[6],(int(item
 walking_left_imgs, walking_right_imgs = resize_images(walking_left_imgs, scale_factor), resize_images(walking_right_imgs, scale_factor)
 item_images = resize_images(item_images, scale_factor)
 bg = pygame.transform.scale(bg, (3000, HEIGHT))  # Scale to world width
+window = pygame.transform.scale(window, (int(window.get_width() * 15), int(window.get_height() * 15)))  # Scale if needed
+broken = pygame.transform.scale(broken, (int(broken.get_width() * 10), int(broken.get_height() * 10)))  # Scale if needed
+
 
 # World attributes
 WORLD_WIDTH = 3000
@@ -72,12 +76,20 @@ velocity = 15
 jumping = False
 y_velocity = 0
 
+pygame.mixer.init()
+pygame.mixer.music.load('28. Hadopelagic Pressure.mp3')
+
+
 # Animation variables
 left = False
 right = False
 frame = 0  # For cycling through frames
 animation_delay = 100  # Delay in milliseconds
 last_update_time = pygame.time.get_ticks()
+pygame.font.init()
+font = pygame.font.Font("Minecraft.ttf", 40)
+countdown_time = 60  # 60 seconds
+start_ticks = pygame.time.get_ticks()
 
 # Camera attributes
 camera_x = 0
@@ -87,6 +99,10 @@ items = generate_random_items(item_images, num_items=10, floor_height=FLOOR_HEIG
 
 # Collected item
 collected_item = None
+
+WHITE = (255,255,255)
+BLACK = (0,0,0)
+RED = (255,0,0)
 
 # Game loop
 running = True
@@ -98,7 +114,6 @@ while running:
 
     # Get key states
     keys = pygame.key.get_pressed()
-    print(collected_item)
 
     # Horizontal movement logic
     if keys[pygame.K_a] or keys[pygame.K_LEFT]:  # Move left
@@ -109,21 +124,14 @@ while running:
         left, right = False, True
     else:
         left, right = False, False
+    if keys[pygame.K_w] or keys[pygame.K_UP]:  # Move up
+        y -= velocity
+    elif keys[pygame.K_s] or keys[pygame.K_RIGHT]:  # Move down
+        y += velocity
 
     # Keep character within world boundaries
     x = max(0, min(x, WORLD_WIDTH - standing_img.get_width()))
-
-    # Jumping logic
-    if keys[pygame.K_w] and not jumping:  # Start jump
-        jumping = True
-        y_velocity = -15
-
-    if jumping:
-        y += y_velocity  # Apply vertical velocity
-        y_velocity += 2  # Gravity
-        if y >= FLOOR_HEIGHT:
-            y = FLOOR_HEIGHT
-            jumping = False
+    y = max(0, min(y, HEIGHT - standing_img.get_height()))  # Prevent going out of frame vertically
 
     # Update camera position
     camera_x = x - WIDTH // 2
@@ -136,20 +144,37 @@ while running:
         collected_item = check_item_pickup(player_rect, items, pickup_range=20)
         if collected_item:
             items.remove(collected_item)
-    if keys[pygame.K_SPACE] and collected_item:
-        print("asdf")
+
     # Draw background
     screen.blit(bg, (-camera_x, 0))
+
+    screen.blit(window, (-140 - camera_x, -50))
+    screen.blit(window, (-140 - camera_x, 220))
 
     # Draw items
     for item in items:
         screen.blit(item["image"], (item["x"] - camera_x, item["y"]))
 
+  # Calculate the remaining time
+    elapsed_time = (pygame.time.get_ticks() - start_ticks) / 1000  # Convert to seconds
+    remaining_time = max(0, countdown_time - elapsed_time)  # Prevent negative values
+
+
+    # Format time as MM:SS
+    minutes = int(remaining_time // 60)
+    seconds = int(remaining_time % 60)
+    timer_text = f"{minutes:02}:{seconds:02}"
+    timer_surface = font.render(timer_text, True, (RED if seconds <= 10 else BLACK))
+    screen.blit(timer_surface, (WIDTH // 2 - 50, 10))
     # Animation handling
     current_time = pygame.time.get_ticks()
     if current_time - last_update_time > animation_delay:
         frame = (frame + 1) % 6  # Loop through frames
         last_update_time = current_time
+
+    if seconds >= 10 and not pygame.mixer.music.get_busy():
+        pygame.mixer.music.play(1)
+
 
     # Draw the character
     if left:
@@ -166,7 +191,21 @@ while running:
         item_y = y - item_image.get_height() + 150 
         screen.blit(item_image, (item_x, item_y))
 
+
+    if seconds <= 0:
+        death_sound = pygame.mixer.music.load('super-mario-death-sound-sound-effect.mp3')
+
+        screen.fill(BLACK)
+        pygame.mixer.music.play(1)
+        end1 = font.render("YOU DID NOT DIE, YOU LOST", True, (255, 0, 0))
+        pygame.time.wait(5000)
+        print("bruh")
+        screen.blit(end1, (WIDTH // 2 - 50, 10))
+        pygame.quit()
+
     # Update the display
     pygame.display.update()
+
+    
 
 pygame.quit()
